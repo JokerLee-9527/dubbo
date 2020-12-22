@@ -208,21 +208,38 @@ public class ExchangeCodec extends TelnetCodec {
     }
 
     protected void encodeRequest(Channel channel, ChannelBuffer buffer, Request req) throws IOException {
+
+//        0～1字节：共两个字节，存储魔术，标志这是一个dubbo协议的数据包；
+//        2～2字节：共一个字节，高3位存储消息类型，低5位存储序列化协议id；
+//        3～3字节：共一个字节，请求数据包并未使用，响应数据包用来存储响应的状态码；
+//        4～7字节：共四个字节，描述body的长度；
+//        8～15字节：共八字节，请求id。s
+
         Serialization serialization = getSerialization(channel);
+
+        // 0～1字节 start
         // header.
         byte[] header = new byte[HEADER_LENGTH];
         // set magic number.
+        // short MAGIC = (short) 0xdabb;
         Bytes.short2bytes(MAGIC, header);
+        // 0～1字节 starta
 
+        // 2～2字节 start
+        // 序列化标示位和消息类型
+
+        // 低5位序列化表示
         // set request and serialization flag.
         header[2] = (byte) (FLAG_REQUEST | serialization.getContentTypeId());
 
+        // 高3位消息类型
         if (req.isTwoWay()) {
             header[2] |= FLAG_TWOWAY;
         }
         if (req.isEvent()) {
             header[2] |= FLAG_EVENT;
         }
+        // 2～2字节 start
 
         // set request id.
         Bytes.long2bytes(req.getId(), header, 4);
