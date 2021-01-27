@@ -1,3 +1,7 @@
+# 该项目是阅读dubbo代码,添加注释用
+
+
+
 # Apache Dubbo Project
 
 [![Build Status](https://travis-ci.org/apache/dubbo.svg?branch=master)](https://travis-ci.org/apache/dubbo)
@@ -44,7 +48,7 @@ There's a [README](https://github.com/apache/dubbo-samples/tree/master/java/dubb
 <properties>
     <dubbo.version>2.7.7</dubbo.version>
 </properties>
-    
+
 <dependencies>
     <dependency>
         <groupId>org.apache.dubbo</groupId>
@@ -153,6 +157,7 @@ public class Application {
     }
 }
 ```
+
 *See [consumer/Application.java](https://github.com/apache/dubbo-samples/blob/master/java/dubbo-samples-api/src/main/java/org/apache/dubbo/samples/client/Application.java) on GitHub.*
 
 ### Build and run the consumer
@@ -163,7 +168,6 @@ public class Application {
 ```
 
 The consumer will print out `hi, dubbo` on the screen.
-
 
 ### Next steps
 
@@ -183,10 +187,13 @@ If you want to try out the cutting-edge features, you can build with the followi
 ## Contact
 
 * Mailing list: 
-  * dev list: for dev/user discussion. [subscribe](mailto:dev-subscribe@dubbo.apache.org), [unsubscribe](mailto:dev-unsubscribe@dubbo.apache.org), [archive](https://lists.apache.org/list.html?dev@dubbo.apache.org),  [guide](https://github.com/apache/dubbo/wiki/Mailing-list-subscription-guide)
   
+  * dev list: for dev/user discussion. [subscribe](mailto:dev-subscribe@dubbo.apache.org), [unsubscribe](mailto:dev-unsubscribe@dubbo.apache.org), [archive](https://lists.apache.org/list.html?dev@dubbo.apache.org),  [guide](https://github.com/apache/dubbo/wiki/Mailing-list-subscription-guide)
+
 * Bugs: [Issues](https://github.com/apache/dubbo/issues/new?template=dubbo-issue-report-template.md)
+
 * Gitter: [Gitter channel](https://gitter.im/alibaba/dubbo) 
+
 * Twitter: [@ApacheDubbo](https://twitter.com/ApacheDubbo)
 
 ## Contributing
