@@ -1,3 +1,6 @@
+# 该项目是阅读dubbo代码,添加注释用
+
+
 # Apache Dubbo Project
 
 [![Build Status](https://travis-ci.org/apache/dubbo.svg?branch=master)](https://travis-ci.org/apache/dubbo)
