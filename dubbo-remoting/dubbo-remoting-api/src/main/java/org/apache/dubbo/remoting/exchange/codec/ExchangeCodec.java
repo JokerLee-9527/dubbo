@@ -209,6 +209,22 @@ public class ExchangeCodec extends TelnetCodec {
 
     protected void encodeRequest(Channel channel, ChannelBuffer buffer, Request req) throws IOException {
 
+
+        // tcp
+//        SYN表示建立连接，
+//        FIN表示关闭连接，
+//        ACK表示响应，
+//        PSH表示有 DATA数据传输，
+//        RST表示连接重置。
+
+
+        // dubbo协议介绍
+        // https://dubbo.apache.org/zh/docs/v2.7/user/references/protocol/
+        // https://dubbo.apache.org/zh/docs/v2.7/user/references/protocol/dubbo/
+
+        // 协议头约定
+        //https://dubbo.apache.org/zh/docs/v2.7/dev/implementation/
+
 //        0～1字节：共两个字节，存储魔术，标志这是一个dubbo协议的数据包；
 //        2～2字节：共一个字节，高3位存储消息类型，低5位存储序列化协议id；
 //        3～3字节：共一个字节，请求数据包并未使用，响应数据包用来存储响应的状态码；
