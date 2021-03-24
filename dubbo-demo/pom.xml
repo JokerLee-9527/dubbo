@@ -38,6 +38,8 @@
 
         <!-- add by Joker start -->
         <module>JdkSpi</module>
+        <module>shican-spi</module>
+        <module>DubboSpi</module>
         <!-- add by Joker end -->
     </modules>
 
