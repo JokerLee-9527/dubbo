@@ -162,8 +162,10 @@ public class ExtensionLoader<T> {
                     ") is not an extension, because it is NOT annotated with @" + SPI.class.getSimpleName() + "!");
         }
 
+        // 从缓存中获取与拓展类对应的ExtensionLoader #By Joker
         ExtensionLoader<T> loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         if (loader == null) {
+            // 若缓存未命中,则创建一个新的实例,先简单看下new ExtensionLoader<T>(type) #By Joker
             EXTENSION_LOADERS.putIfAbsent(type, new ExtensionLoader<T>(type));
             loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         }
@@ -366,6 +368,7 @@ public class ExtensionLoader<T> {
     private Holder<Object> getOrCreateHolder(String name) {
         Holder<Object> holder = cachedInstances.get(name);
         if (holder == null) {
+            // 没有就创建个空的
             cachedInstances.putIfAbsent(name, new Holder<>());
             holder = cachedInstances.get(name);
         }
@@ -418,14 +421,17 @@ public class ExtensionLoader<T> {
             throw new IllegalArgumentException("Extension name == null");
         }
         if ("true".equals(name)) {
+            // 创建默认扩展点 #By Joker
             return getDefaultExtension();
         }
+        // Holder也是用于持有对象的,用作缓存 #By Joker
         final Holder<Object> holder = getOrCreateHolder(name);
         Object instance = holder.get();
         if (instance == null) {
             synchronized (holder) {
                 instance = holder.get();
                 if (instance == null) {
+                    // 创建拓展点实例 #By Joker
                     instance = createExtension(name, wrap);
                     holder.set(instance);
                 }
@@ -630,11 +636,13 @@ public class ExtensionLoader<T> {
             throw findException(name);
         }
         try {
+            // 也是尝试先从缓存获取,获取不到通过反射创建一个并放到缓存中
             T instance = (T) EXTENSION_INSTANCES.get(clazz);
             if (instance == null) {
                 EXTENSION_INSTANCES.putIfAbsent(clazz, clazz.newInstance());
                 instance = (T) EXTENSION_INSTANCES.get(clazz);
             }
+            // todo
             injectExtension(instance);
 
 
@@ -752,11 +760,14 @@ public class ExtensionLoader<T> {
     }
 
     private Map<String, Class<?>> getExtensionClasses() {
+        // 从缓存这两个获取映射关系表 #by Joker
         Map<String, Class<?>> classes = cachedClasses.get();
+        // 双重检查 #by Joker
         if (classes == null) {
             synchronized (cachedClasses) {
                 classes = cachedClasses.get();
                 if (classes == null) {
+                    // 如果缓存中没有,则去加载这个映射关系
                     classes = loadExtensionClasses();
                     cachedClasses.set(classes);
                 }

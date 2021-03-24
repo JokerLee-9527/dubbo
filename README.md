@@ -1,5 +1,35 @@
 # 该项目是阅读dubbo代码,添加注释用
 
+---
+
+1. pom.xm中添加了,为了方便编译通过.跳过测试.
+
+```xml
+<!-- add by Joker start -->
+<skipTests>true</skipTests>
+<!-- add by Joker end -->
+```
+
+
+
+2.阿
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 下面是原Dubbo的Readme.md
+
+---
+
 
 
 # Apache Dubbo Project

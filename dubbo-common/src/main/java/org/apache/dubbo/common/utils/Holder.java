@@ -18,6 +18,8 @@ package org.apache.dubbo.common.utils;
 
 /**
  * Helper Class for hold a value.
+ *
+ * 有点象个C的指针,不用管内部存的什么对象. #By Joker
  */
 public class Holder<T> {
 

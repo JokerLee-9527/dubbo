@@ -465,6 +465,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <!-- add by Joker start -->
+                    <skipTests>true</skipTests>
+                    <!-- add by Joker end -->
                     <useSystemClassLoader>true</useSystemClassLoader>
                     <forkMode>once</forkMode>
                     <argLine>${argline} ${jacocoArgLine}</argLine>
