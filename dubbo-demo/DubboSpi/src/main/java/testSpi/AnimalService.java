@@ -1,6 +1,8 @@
-package spi;
+package testSpi;
 
-import com.alibaba.dubbo.common.extension.SPI;
+//import com.alibaba.dubbo.common.extension.SPI;
+
+import org.apache.dubbo.common.extension.SPI;
 
 /**
  * @author JokerLee
