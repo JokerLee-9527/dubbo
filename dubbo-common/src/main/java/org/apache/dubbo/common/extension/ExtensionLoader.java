@@ -140,6 +140,17 @@ public class ExtensionLoader<T> {
         return asList(strategies);
     }
 
+    /**
+     * 注意这个构造函数是private,也是无法new这个对象的. 需要特别的方法创建
+     * {@link ExtensionLoader#getExtensionLoader(java.lang.Class)}
+     * 用该方法创建ExtensionLoader是想在{@link ExtensionLoader#EXTENSION_LOADERS}
+     * 中缓存,避免每次创建.
+     *
+     * @PSI标注的接口与ExtensionLoader一一对应,并且缓存起来
+     *
+     * #by Joker
+     *
+     */
     private ExtensionLoader(Class<?> type) {
         this.type = type;
         objectFactory = (type == ExtensionFactory.class ? null : ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension());
@@ -149,11 +160,18 @@ public class ExtensionLoader<T> {
         return type.isAnnotationPresent(SPI.class);
     }
 
+    /**
+     * 参考这个方法的说明
+     * {@link ExtensionLoader#ExtensionLoader(java.lang.Class)}
+     * #by Joker
+     *
+     */
     @SuppressWarnings("unchecked")
     public static <T> ExtensionLoader<T> getExtensionLoader(Class<T> type) {
         if (type == null) {
             throw new IllegalArgumentException("Extension type == null");
         }
+        //@SPI修饰的必须是接口
         if (!type.isInterface()) {
             throw new IllegalArgumentException("Extension type (" + type + ") is not an interface!");
         }
