@@ -68,8 +68,10 @@ import static org.apache.dubbo.common.constants.CommonConstants.REMOVE_VALUE_PRE
  * public interface AnimalService
  *
  * 2. ExtensionLoader<AnimalService> loader = ExtensionLoader.getExtensionLoader(AnimalService.class);
- * 记载ExtensionLoader(AnimalService)并缓存到静态数组中
+ * getExtensionLoader静态方法,记载ExtensionLoader(AnimalService)并缓存到静态数组中
  * private static final ConcurrentMap<Class<?>, ExtensionLoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<>(64);
+ *
+ * 静态数组中EXTENSION_LOADERS中的ExtensionLoader与@SPI注解的接口一一对应,起到一个缓存的作用
  *
  * 3. AnimalService animalService = loader.getExtension("dog");
  * 记载扩点的具体实现类(testSpi.DogService)
@@ -109,19 +111,58 @@ public class ExtensionLoader<T> {
 
     private static final Pattern NAME_SEPARATOR = Pattern.compile("\\s*[,]+\\s*");
 
+    /**
+     * 静态数组中EXTENSION_LOADERS中的ExtensionLoader与@SPI注解的接口一一对应,起到一个缓存的作用,不需要每次创建。
+     * 静态数组是进程唯一的。
+     */
     private static final ConcurrentMap<Class<?>, ExtensionLoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<>(64);
 
+    /**
+     * 扩增点的实现类,与内存中的实例(Instance)的对应关系.
+     * 这个是Map是静态全局的,不仅仅是某个加载点(接口)的实现类,全部的.
+     */
     private static final ConcurrentMap<Class<?>, Object> EXTENSION_INSTANCES = new ConcurrentHashMap<>(64);
 
     private final Class<?> type;
 
+    /**
+     * 扩增点ExtensionFactory
+     * @SPI
+     * public interface ExtensionFactory
+     *
+     * 每个ExtensionLoader(扩增点,被@PSI注解的接口)都要有个objectFactory, 除非本身就是ExtensionFactory.class的扩增点
+     * 反过来讲: ExtensionFactory扩增点的objectFactory为null
+     * {@link ExtensionLoader#ExtensionLoader(java.lang.Class)}
+     *
+     * 下面文件中记载了扩增点
+     * dubbo-common\src\main\resources\META-INF\dubbo\internal\org.apache.dubbo.common.extension.ExtensionFactory
+     * adaptive=org.apache.dubbo.common.extension.factory.AdaptiveExtensionFactory
+     * spi=org.apache.dubbo.common.extension.factory.SpiExtensionFactory
+     *
+     * dubbo-config\dubbo-config-spring\src\main\resources\META-INF\dubbo\internal\org.apache.dubbo.common.extension.ExtensionFactory
+     * spring=org.apache.dubbo.config.spring.extension.SpringExtensionFactory
+     *
+     * 该扩增点有3个实现类SpiExtensionFactory, AdaptiveExtensionFactory, SpringExtensionFactory
+     *
+     */
     private final ExtensionFactory objectFactory;
 
     private final ConcurrentMap<Class<?>, String> cachedNames = new ConcurrentHashMap<>();
 
+    /**
+     * 最外层是个Holder(类似于一个指针)
+     * 然后是个map,创建是扩增点的名(dog,等号左边的dog=testAdaptive.DogServiceTA,而不是类名)和具体Class
+     * 这个是ExtensionLoader对象级别, 每个扩增点(@PSI注解的接口)对应一组扩增点实现(接口实现)
+     *
+     */
     private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<>();
 
     private final Map<String, Object> cachedActivates = new ConcurrentHashMap<>();
+
+    /**
+     *  加载所有的扩增点(接口interface)的实现类
+     *  add的地方参照{@link ExtensionLoader#getExtensionClasses()}
+     */
     private final ConcurrentMap<String, Holder<Object>> cachedInstances = new ConcurrentHashMap<>();
     private final Holder<Object> cachedAdaptiveInstance = new Holder<>();
     private volatile Class<?> cachedAdaptiveClass = null;
@@ -132,6 +173,13 @@ public class ExtensionLoader<T> {
 
     private Map<String, IllegalStateException> exceptions = new ConcurrentHashMap<>();
 
+    /**
+     *  strategy[0].directory(),strategy[1].directory(),strategy[2].directory()
+     *  META-INF/dubbo/internal/   META-INF/dubbo/   META-INF/services/
+     *
+     *  loadLoadingStrategies()从才用了Jdk原生SPI,加载LoadingStrategy扩增点的具体实现,再通过实现类的directory()获取路径.
+     *  采用这个方法,我觉得是可能考虑可以扩增吧! 还是比较奇怪的写法.
+     */
     private static volatile LoadingStrategy[] strategies = loadLoadingStrategies();
 
     public static void setLoadingStrategies(LoadingStrategy... strategies) {
@@ -165,7 +213,7 @@ public class ExtensionLoader<T> {
     }
 
     /**
-     * 注意这个构造函数是private,也是无法new这个对象的. 需要特别的方法创建
+     * 注意这个构造函数是private,也是无法在函数外部new这个对象的. 需要特别的方法创建
      * {@link ExtensionLoader#getExtensionLoader(java.lang.Class)}
      * 用该方法创建ExtensionLoader是想在{@link ExtensionLoader#EXTENSION_LOADERS}
      * 中缓存,避免每次创建.
@@ -179,6 +227,10 @@ public class ExtensionLoader<T> {
      */
     private ExtensionLoader(Class<?> type) {
         this.type = type;
+        /**
+         * 每个ExtensionLoader(扩增点,被@PSI注解的接口)都要有个objectFactory(ExtensionFactory),除非本身是ExtensionFactory.class的扩增点
+         * 反过来讲: ExtensionFactory扩增点的objectFactory为null
+         */
         objectFactory = (type == ExtensionFactory.class ? null : ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension());
     }
 
@@ -197,10 +249,11 @@ public class ExtensionLoader<T> {
         if (type == null) {
             throw new IllegalArgumentException("Extension type == null");
         }
-        //@SPI修饰的必须是接口
+        //必须是接口 #by Joker
         if (!type.isInterface()) {
             throw new IllegalArgumentException("Extension type (" + type + ") is not an interface!");
         }
+        //必须@SPI注解 #by Joker
         if (!withExtensionAnnotation(type)) {
             throw new IllegalArgumentException("Extension type (" + type +
                     ") is not an extension, because it is NOT annotated with @" + SPI.class.getSimpleName() + "!");
@@ -209,7 +262,8 @@ public class ExtensionLoader<T> {
         // 从缓存中获取与拓展类对应的ExtensionLoader #By Joker
         ExtensionLoader<T> loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         if (loader == null) {
-            // 若缓存未命中,则创建一个新的实例,先简单看下new ExtensionLoader<T>(type) #By Joker
+            // 若缓存未命中,则创建一个新的实例 #By Joker
+            // 构造函数是private, ExtensionLoader对象通过getExtensionLoader方法创建
             EXTENSION_LOADERS.putIfAbsent(type, new ExtensionLoader<T>(type));
             loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         }
@@ -519,6 +573,9 @@ public class ExtensionLoader<T> {
 
     public Set<String> getSupportedExtensions() {
         Map<String, Class<?>> clazzes = getExtensionClasses();
+        /**
+         * 返回一个只读的set
+         */
         return Collections.unmodifiableSet(new TreeSet<>(clazzes.keySet()));
     }
 
@@ -703,7 +760,8 @@ public class ExtensionLoader<T> {
                 EXTENSION_INSTANCES.putIfAbsent(clazz, clazz.newInstance());
                 instance = (T) EXTENSION_INSTANCES.get(clazz);
             }
-            // 依赖注入和cachedWrapperClasses  todo
+            // 依赖注入(查询set方法然后注入)
+            // 和cachedWrapperClasses  todo
             injectExtension(instance);
 
 
@@ -741,11 +799,24 @@ public class ExtensionLoader<T> {
 
     private T injectExtension(T instance) {
 
+
         if (objectFactory == null) {
+            /**
+             * ExtensionFactory扩增点
+             * 实现类: SpiExtensionFactory, AdaptiveExtensionFactory, SpringExtensionFactory
+             * 不需要反转注入IOC
+             */
             return instance;
         }
 
         try {
+            /**
+             * 遍历获取方法,条件如下
+             * 1. 是Set
+             * 2. 没有@DisableInject注解
+             * 3. 方法第一个参数不是基本类型的
+             *
+             */
             for (Method method : instance.getClass().getMethods()) {
                 if (!isSetter(method)) {
                     continue;
@@ -762,8 +833,11 @@ public class ExtensionLoader<T> {
                 }
 
                 try {
+                    // 由setName() 方法名,获取属性名称
                     String property = getSetterProperty(method);
+                    // todo
                     Object object = objectFactory.getExtension(pt, property);
+                    // 获取之后通过反射赋值
                     if (object != null) {
                         method.invoke(instance, object);
                     }
@@ -821,13 +895,10 @@ public class ExtensionLoader<T> {
     }
 
     /**
-     * 所有加载扩增点的实现类
-     *
-     * 如果没有,则加载所有的扩增点(接口interface)的实现类,并放到
+     * 扩增点实现名(如:dog,等号左边的dog=testAdaptive.DogServiceTA,而不是类名)和具体Class的map
+     * {@link ExtensionLoader#cachedClasses}
      * private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<>();
-     * 中
      *
-     * @return
      */
     private Map<String, Class<?>> getExtensionClasses() {
         // 从缓存这两个获取映射关系表 #by Joker
@@ -837,7 +908,11 @@ public class ExtensionLoader<T> {
             synchronized (cachedClasses) {
                 classes = cachedClasses.get();
                 if (classes == null) {
-                    // 如果缓存中没有,则去加载这个映射关系 #by Joker
+                    //  #by Joker
+                    /**
+                     * 如果缓存中没有,则去加载这个映射关系
+                     * (扩增点实现名与扩增点实现类Class的对应关系)
+                     */
                     classes = loadExtensionClasses();
                     cachedClasses.set(classes);
                 }
@@ -858,6 +933,11 @@ public class ExtensionLoader<T> {
 
         Map<String, Class<?>> extensionClasses = new HashMap<>();
 
+        /**
+         * strategy[0].directory(),strategy[1].directory(),strategy[2].directory()
+         * META-INF/dubbo/internal/   META-INF/dubbo/   META-INF/services/
+         * 从这些目录中加载扩增点的名(dog,等号左边的dog=testAdaptive.DogServiceTA,而不是类名)和具体Class
+         */
         for (LoadingStrategy strategy : strategies) {
             loadDirectory(extensionClasses, strategy.directory(), type.getName(), strategy.preferExtensionClassLoader(), strategy.overridden(), strategy.excludedPackages());
             loadDirectory(extensionClasses, strategy.directory(), type.getName().replace("org.apache", "com.alibaba"), strategy.preferExtensionClassLoader(), strategy.overridden(), strategy.excludedPackages());

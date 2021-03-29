@@ -30,12 +30,21 @@ import java.util.List;
 @Adaptive
 public class AdaptiveExtensionFactory implements ExtensionFactory {
 
+    /**
+     * 里面维护SpringExtensionFactory和SpiExtensionFactory todo
+     */
     private final List<ExtensionFactory> factories;
 
     public AdaptiveExtensionFactory() {
+        /**
+         * 在构造
+         */
         ExtensionLoader<ExtensionFactory> loader = ExtensionLoader.getExtensionLoader(ExtensionFactory.class);
         List<ExtensionFactory> list = new ArrayList<ExtensionFactory>();
         for (String name : loader.getSupportedExtensions()) {
+            /**
+             * 分别给SpringExtensionFactory和SpiExtensionFactory创建对象并放入list中 todo
+             */
             list.add(loader.getExtension(name));
         }
         factories = Collections.unmodifiableList(list);
@@ -43,6 +52,9 @@ public class AdaptiveExtensionFactory implements ExtensionFactory {
 
     @Override
     public <T> T getExtension(Class<T> type, String name) {
+        /**
+         * 遍历factory中所有的ExtensionFactory,先从SpiExtensionFactory中获取,获取不到在去Spring容器中获取
+         */
         for (ExtensionFactory factory : factories) {
             T extension = factory.getExtension(type, name);
             if (extension != null) {

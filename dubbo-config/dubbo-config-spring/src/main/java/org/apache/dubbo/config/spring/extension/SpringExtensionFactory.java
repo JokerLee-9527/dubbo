@@ -60,6 +60,10 @@ public class SpringExtensionFactory implements ExtensionFactory {
     @SuppressWarnings("unchecked")
     public <T> T getExtension(Class<T> type, String name) {
 
+        /**
+         * 先根据名字去取,取不到再根据类型去取
+         */
+
         //SPI should be get from SpiExtensionFactory
         if (type.isInterface() && type.isAnnotationPresent(SPI.class)) {
             return null;
