@@ -1,0 +1,5 @@
+dubbo=testAdaptive2.DubboAdaptiveExt
+cloud=testAdaptive2.SpringCloudAdaptiveExt
+thrift=testAdaptive2.ThriftAdaptiveExt
+#thrift_case3=testAdaptive2.ThriftAdaptiveExtCase3
+wrapper.AdaptiveExtWrapper

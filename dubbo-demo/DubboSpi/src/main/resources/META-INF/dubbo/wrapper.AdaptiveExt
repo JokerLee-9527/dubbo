@@ -1,0 +1,2 @@
+dubbo=wrapper.DubboAdaptiveExt
+wrapper.AdaptiveExtWrapper
